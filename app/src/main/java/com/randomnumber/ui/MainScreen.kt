@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -47,6 +49,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.randomnumber.RandomGenerator
 import com.randomnumber.Scheme
 import com.randomnumber.SchemeStore
@@ -60,20 +63,26 @@ fun MainScreen(schemeStore: SchemeStore) {
 
     var minText by remember { mutableStateOf("1") }
     var maxText by remember { mutableStateOf("100") }
-    var result by remember { mutableStateOf<Long?>(null) }
+    var countText by remember { mutableStateOf("1") }
+    var results by remember { mutableStateOf<List<Long>>(emptyList()) }
     var errorMsg by remember { mutableStateOf<String?>(null) }
     var showSaveDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("随机数生成器") },
+                title = { 
+                    Text(
+                        "随机数生成器",
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    ) 
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -82,22 +91,22 @@ fun MainScreen(schemeStore: SchemeStore) {
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // 范围输入区
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surface
                     ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = "设置范围",
-                            style = MaterialTheme.typography.titleMedium
+                            text = "设置参数",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.primary
                         )
 
                         Row(
@@ -110,7 +119,11 @@ fun MainScreen(schemeStore: SchemeStore) {
                                 label = { Text("最小值") },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 singleLine = true,
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                    focusedLabelColor = MaterialTheme.colorScheme.primary
+                                )
                             )
                             OutlinedTextField(
                                 value = maxText,
@@ -118,9 +131,26 @@ fun MainScreen(schemeStore: SchemeStore) {
                                 label = { Text("最大值") },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 singleLine = true,
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                    focusedLabelColor = MaterialTheme.colorScheme.primary
+                                )
                             )
                         }
+
+                        OutlinedTextField(
+                            value = countText,
+                            onValueChange = { countText = it; errorMsg = null },
+                            label = { Text("生成数量") },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                focusedLabelColor = MaterialTheme.colorScheme.primary
+                            )
+                        )
 
                         if (errorMsg != null) {
                             Text(
@@ -138,20 +168,26 @@ fun MainScreen(schemeStore: SchemeStore) {
                                 onClick = {
                                     val min = minText.toLongOrNull()
                                     val max = maxText.toLongOrNull()
+                                    val count = countText.toIntOrNull() ?: 1
                                     if (min == null || max == null) {
                                         errorMsg = "请输入有效的数字"
                                     } else if (min > max) {
                                         errorMsg = "最小值不能大于最大值"
+                                    } else if (count <= 0) {
+                                        errorMsg = "生成数量必须大于0"
                                     } else {
-                                        result = RandomGenerator.generate(min, max)
+                                        results = RandomGenerator.generateMultiple(min, max, count)
                                         errorMsg = null
                                     }
                                 },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary
+                                )
                             ) {
                                 Icon(Icons.Filled.Casino, contentDescription = null)
                                 Spacer(Modifier.width(8.dp))
-                                Text("生成随机数")
+                                Text("生成")
                             }
 
                             FilledTonalButton(
@@ -165,39 +201,74 @@ fun MainScreen(schemeStore: SchemeStore) {
                 }
             }
 
-            // 结果显示
-            item {
-                AnimatedVisibility(
-                    visible = result != null,
-                    enter = fadeIn() + scaleIn()
-                ) {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
-                        )
+            if (results.isNotEmpty()) {
+                item {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = "生成结果 (${results.size}个)",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+
+                item {
+                    AnimatedVisibility(
+                        visible = results.isNotEmpty(),
+                        enter = fadeIn() + scaleIn()
                     ) {
-                        Text(
-                            text = result?.toString() ?: "",
-                            style = MaterialTheme.typography.displayLarge,
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 32.dp)
-                        )
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                if (results.size == 1) {
+                                    Text(
+                                        text = results[0].toString(),
+                                        style = MaterialTheme.typography.displayLarge,
+                                        textAlign = TextAlign.Center,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                } else {
+                                    results.forEachIndexed { index, number ->
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = "#${index + 1}",
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                            Text(
+                                                text = number.toString(),
+                                                style = MaterialTheme.typography.headlineMedium,
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
 
-            // 方案列表标题
             if (schemes.isNotEmpty()) {
                 item {
-                    Spacer(Modifier.height(4.dp))
+                    Spacer(Modifier.height(8.dp))
                     Text(
                         text = "已保存的方案",
                         style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
 
@@ -207,7 +278,7 @@ fun MainScreen(schemeStore: SchemeStore) {
                         onLoad = {
                             minText = scheme.min.toString()
                             maxText = scheme.max.toString()
-                            result = null
+                            results = emptyList()
                             errorMsg = null
                         },
                         onDelete = {
@@ -219,7 +290,6 @@ fun MainScreen(schemeStore: SchemeStore) {
         }
     }
 
-    // 保存方案对话框
     if (showSaveDialog) {
         SaveSchemeDialog(
             onDismiss = { showSaveDialog = false },
@@ -259,7 +329,8 @@ private fun SchemeCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = scheme.name,
-                    style = MaterialTheme.typography.titleSmall
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = "范围: ${scheme.min} ~ ${scheme.max}",

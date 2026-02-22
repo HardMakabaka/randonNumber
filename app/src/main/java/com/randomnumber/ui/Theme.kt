@@ -2,36 +2,44 @@ package com.randomnumber.ui
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-private val Purple40 = Color(0xFF6750A4)
-private val PurpleGrey40 = Color(0xFF625B71)
-private val Pink40 = Color(0xFF7D5260)
-private val Purple80 = Color(0xFFD0BCFF)
-private val PurpleGrey80 = Color(0xFFCCC2DC)
-private val Pink80 = Color(0xFFEFB8C8)
-
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-)
+private val Black = Color(0xFF000000)
+private val DarkGray = Color(0xFF121212)
+private val MediumGray = Color(0xFF1E1E1E)
+private val LightGray = Color(0xFF2C2C2C)
+private val AccentGreen = Color(0xFF00E676)
+private val AccentGreenDark = Color(0xFF00C853)
+private val TextPrimary = Color(0xFFFFFFFF)
+private val TextSecondary = Color(0xFFB3B3B3)
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = AccentGreen,
+    onPrimary = Black,
+    primaryContainer = LightGray,
+    onPrimaryContainer = TextPrimary,
+    secondary = AccentGreenDark,
+    onSecondary = Black,
+    secondaryContainer = LightGray,
+    onSecondaryContainer = TextPrimary,
+    tertiary = AccentGreen,
+    background = Black,
+    onBackground = TextPrimary,
+    surface = DarkGray,
+    onSurface = TextPrimary,
+    surfaceVariant = MediumGray,
+    onSurfaceVariant = TextSecondary,
+    error = Color(0xFFCF6679),
+    onError = Black
 )
 
 @Composable
 fun RandomNumberTheme(
-    darkTheme: Boolean = false,
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
-        colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme,
+        colorScheme = DarkColorScheme,
         content = content
     )
 }
